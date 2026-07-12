@@ -1,0 +1,564 @@
+{
+    "Quick": {
+        "RandomForest": [
+            {
+                "params": {
+                    "max_depth": 10,
+                    "n_estimators": 50
+                },
+                "mean_fit_time": 0.2510439395904541,
+                "mean_test_score": -33.479709233085124,
+                "std_test_score": 4.813285809703906
+            }
+        ],
+        "GradientBoosting": [
+            {
+                "params": {
+                    "learning_rate": 0.1,
+                    "max_depth": 3,
+                    "n_estimators": 50
+                },
+                "mean_fit_time": 0.1256122589111328,
+                "mean_test_score": -30.860204088851766,
+                "std_test_score": 4.26800329697228
+            }
+        ],
+        "GBQuantile90": [
+            {
+                "params": {
+                    "learning_rate": 0.1,
+                    "max_depth": 3,
+                    "n_estimators": 50
+                },
+                "mean_fit_time": 0.1519479751586914,
+                "mean_test_score": -71.41599160645295,
+                "std_test_score": 22.696883510844398
+            }
+        ],
+        "XGBoost": [
+            {
+                "params": {
+                    "learning_rate": 0.1,
+                    "max_depth": 3,
+                    "n_estimators": 50
+                },
+                "mean_fit_time": 0.22621588706970214,
+                "mean_test_score": -30.53375552999926,
+                "std_test_score": 4.538049371676645
+            }
+        ],
+        "Ridge": [
+            {
+                "params": {
+                    "alpha": 1.0
+                },
+                "mean_fit_time": 0.004384326934814453,
+                "mean_test_score": -42.52236211142254,
+                "std_test_score": 9.971188462250161
+            }
+        ],
+        "Lasso": [
+            {
+                "params": {
+                    "alpha": 0.1
+                },
+                "mean_fit_time": 0.0041885852813720705,
+                "mean_test_score": -39.83413039642779,
+                "std_test_score": 10.168325942515263
+            }
+        ],
+        "ElasticNet": [
+            {
+                "params": {
+                    "alpha": 0.1,
+                    "l1_ratio": 0.5
+                },
+                "mean_fit_time": 0.003588294982910156,
+                "mean_test_score": -39.91139584936402,
+                "std_test_score": 10.885746402394428
+            }
+        ]
+    },
+    "Detailed": {
+        "5": {
+            "RandomForest": [
+                {
+                    "params": {
+                        "max_depth": 10,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.533414649963379,
+                    "mean_test_score": -2.670211086967977,
+                    "std_test_score": 0.27792173749486465
+                }
+            ],
+            "GradientBoosting": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2593390464782715,
+                    "mean_test_score": -2.384641483133942,
+                    "std_test_score": 0.27534161544052854
+                }
+            ],
+            "GBQuantile90": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2929826736450195,
+                    "mean_test_score": -7.461227255789869,
+                    "std_test_score": 0.9251381346898108
+                }
+            ],
+            "XGBoost": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.20166587829589844,
+                    "mean_test_score": -2.415714727320532,
+                    "std_test_score": 0.31118553540435584
+                }
+            ],
+            "Ridge": [
+                {
+                    "params": {
+                        "alpha": 1.0
+                    },
+                    "mean_fit_time": 0.0052245140075683595,
+                    "mean_test_score": -2.1822063955906588,
+                    "std_test_score": 0.21463593139713333
+                }
+            ],
+            "Lasso": [
+                {
+                    "params": {
+                        "alpha": 0.1
+                    },
+                    "mean_fit_time": 0.0041373252868652345,
+                    "mean_test_score": -2.1839098547388787,
+                    "std_test_score": 0.23137594407949394
+                }
+            ],
+            "ElasticNet": [
+                {
+                    "params": {
+                        "alpha": 0.1,
+                        "l1_ratio": 0.5
+                    },
+                    "mean_fit_time": 0.004521608352661133,
+                    "mean_test_score": -2.6293901872356047,
+                    "std_test_score": 0.35350427289407327
+                }
+            ]
+        },
+        "15": {
+            "RandomForest": [
+                {
+                    "params": {
+                        "max_depth": 10,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.5475459098815918,
+                    "mean_test_score": -8.221463474288871,
+                    "std_test_score": 1.4609746513350947
+                }
+            ],
+            "GradientBoosting": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2599800109863281,
+                    "mean_test_score": -7.446242836217365,
+                    "std_test_score": 1.3683504220499938
+                }
+            ],
+            "GBQuantile90": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2879013538360596,
+                    "mean_test_score": -18.196642010449892,
+                    "std_test_score": 1.0842992137536207
+                }
+            ],
+            "XGBoost": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.19630036354064942,
+                    "mean_test_score": -7.3857953491870845,
+                    "std_test_score": 1.304470405180714
+                }
+            ],
+            "Ridge": [
+                {
+                    "params": {
+                        "alpha": 1.0
+                    },
+                    "mean_fit_time": 0.005089664459228515,
+                    "mean_test_score": -6.890182082482056,
+                    "std_test_score": 0.9358953463219526
+                }
+            ],
+            "Lasso": [
+                {
+                    "params": {
+                        "alpha": 0.1
+                    },
+                    "mean_fit_time": 0.0039748668670654295,
+                    "mean_test_score": -6.64767188239184,
+                    "std_test_score": 0.8803140711260905
+                }
+            ],
+            "ElasticNet": [
+                {
+                    "params": {
+                        "alpha": 0.1,
+                        "l1_ratio": 0.5
+                    },
+                    "mean_fit_time": 0.004376792907714843,
+                    "mean_test_score": -7.2010716565617585,
+                    "std_test_score": 0.9694134395861735
+                }
+            ]
+        },
+        "30": {
+            "RandomForest": [
+                {
+                    "params": {
+                        "max_depth": 10,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.5418455600738525,
+                    "mean_test_score": -16.030251396631023,
+                    "std_test_score": 3.149285132583471
+                }
+            ],
+            "GradientBoosting": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2606167793273926,
+                    "mean_test_score": -13.84405565316188,
+                    "std_test_score": 2.6597167856406942
+                }
+            ],
+            "GBQuantile90": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2882393360137939,
+                    "mean_test_score": -31.89504501172131,
+                    "std_test_score": 1.9645815358923924
+                }
+            ],
+            "XGBoost": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2289029598236084,
+                    "mean_test_score": -14.151289353404858,
+                    "std_test_score": 3.106045228163298
+                }
+            ],
+            "Ridge": [
+                {
+                    "params": {
+                        "alpha": 1.0
+                    },
+                    "mean_fit_time": 0.005196571350097656,
+                    "mean_test_score": -14.029462623928591,
+                    "std_test_score": 2.5388209289478705
+                }
+            ],
+            "Lasso": [
+                {
+                    "params": {
+                        "alpha": 0.1
+                    },
+                    "mean_fit_time": 0.004146051406860351,
+                    "mean_test_score": -13.212418061104703,
+                    "std_test_score": 2.2823756822084507
+                }
+            ],
+            "ElasticNet": [
+                {
+                    "params": {
+                        "alpha": 0.1,
+                        "l1_ratio": 0.5
+                    },
+                    "mean_fit_time": 0.004474544525146484,
+                    "mean_test_score": -13.67618968199146,
+                    "std_test_score": 2.3531910616444547
+                }
+            ]
+        },
+        "60": {
+            "RandomForest": [
+                {
+                    "params": {
+                        "max_depth": 10,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.5376768589019776,
+                    "mean_test_score": -25.399126859426598,
+                    "std_test_score": 5.097186892270191
+                }
+            ],
+            "GradientBoosting": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2599766731262207,
+                    "mean_test_score": -23.21232724793719,
+                    "std_test_score": 5.49732991428826
+                }
+            ],
+            "GBQuantile90": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.28577346801757814,
+                    "mean_test_score": -49.49624190716852,
+                    "std_test_score": 9.335287497820422
+                }
+            ],
+            "XGBoost": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.019359683990478514,
+                    "mean_test_score": -23.524537577869914,
+                    "std_test_score": 5.892507966545325
+                }
+            ],
+            "Ridge": [
+                {
+                    "params": {
+                        "alpha": 1.0
+                    },
+                    "mean_fit_time": 0.005073356628417969,
+                    "mean_test_score": -26.49988918651614,
+                    "std_test_score": 4.9166001579837655
+                }
+            ],
+            "Lasso": [
+                {
+                    "params": {
+                        "alpha": 0.1
+                    },
+                    "mean_fit_time": 0.004427576065063476,
+                    "mean_test_score": -23.679826785131276,
+                    "std_test_score": 4.305291802122162
+                }
+            ],
+            "ElasticNet": [
+                {
+                    "params": {
+                        "alpha": 0.1,
+                        "l1_ratio": 0.5
+                    },
+                    "mean_fit_time": 0.004410839080810547,
+                    "mean_test_score": -24.21338187777034,
+                    "std_test_score": 4.764703362261608
+                }
+            ]
+        },
+        "90": {
+            "RandomForest": [
+                {
+                    "params": {
+                        "max_depth": 10,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.5170282840728759,
+                    "mean_test_score": -28.852660235874783,
+                    "std_test_score": 5.068469072957608
+                }
+            ],
+            "GradientBoosting": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.2599766254425049,
+                    "mean_test_score": -26.763983780516877,
+                    "std_test_score": 6.9363705624107
+                }
+            ],
+            "GBQuantile90": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.28517928123474123,
+                    "mean_test_score": -57.392671113062285,
+                    "std_test_score": 15.40466393919905
+                }
+            ],
+            "XGBoost": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.06117439270019531,
+                    "mean_test_score": -26.52797241233312,
+                    "std_test_score": 6.826410225435087
+                }
+            ],
+            "Ridge": [
+                {
+                    "params": {
+                        "alpha": 1.0
+                    },
+                    "mean_fit_time": 0.004940557479858399,
+                    "mean_test_score": -32.01177666556563,
+                    "std_test_score": 5.606750701683706
+                }
+            ],
+            "Lasso": [
+                {
+                    "params": {
+                        "alpha": 0.1
+                    },
+                    "mean_fit_time": 0.004672718048095703,
+                    "mean_test_score": -28.707042713072553,
+                    "std_test_score": 4.955122592587372
+                }
+            ],
+            "ElasticNet": [
+                {
+                    "params": {
+                        "alpha": 0.1,
+                        "l1_ratio": 0.5
+                    },
+                    "mean_fit_time": 0.004458808898925781,
+                    "mean_test_score": -29.054609168559427,
+                    "std_test_score": 5.6594659224289305
+                }
+            ]
+        },
+        "120": {
+            "RandomForest": [
+                {
+                    "params": {
+                        "max_depth": 10,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.5337597370147705,
+                    "mean_test_score": -30.22849904662714,
+                    "std_test_score": 5.032887796741216
+                }
+            ],
+            "GradientBoosting": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.258695125579834,
+                    "mean_test_score": -28.00804464992741,
+                    "std_test_score": 6.233533505511062
+                }
+            ],
+            "GBQuantile90": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.28572959899902345,
+                    "mean_test_score": -62.186137243952864,
+                    "std_test_score": 19.088397933097504
+                }
+            ],
+            "XGBoost": [
+                {
+                    "params": {
+                        "learning_rate": 0.1,
+                        "max_depth": 3,
+                        "n_estimators": 50
+                    },
+                    "mean_fit_time": 0.01927938461303711,
+                    "mean_test_score": -27.986741223901795,
+                    "std_test_score": 6.202996324199357
+                }
+            ],
+            "Ridge": [
+                {
+                    "params": {
+                        "alpha": 1.0
+                    },
+                    "mean_fit_time": 0.004942512512207032,
+                    "mean_test_score": -33.713997900796045,
+                    "std_test_score": 5.65765344115351
+                }
+            ],
+            "Lasso": [
+                {
+                    "params": {
+                        "alpha": 0.1
+                    },
+                    "mean_fit_time": 0.004874372482299804,
+                    "mean_test_score": -30.45584633799897,
+                    "std_test_score": 5.153191430943318
+                }
+            ],
+            "ElasticNet": [
+                {
+                    "params": {
+                        "alpha": 0.1,
+                        "l1_ratio": 0.5
+                    },
+                    "mean_fit_time": 0.004286861419677735,
+                    "mean_test_score": -30.788514537078015,
+                    "std_test_score": 5.972105988703707
+                }
+            ]
+        }
+    }
+}

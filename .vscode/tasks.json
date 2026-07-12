@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Python File Cleanly",
+      "type": "shell",
+      "command": "& '${workspaceFolder}/.venv/Scripts/python.exe' '${file}'",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false, // Zeigt den ausgeführten Befehl selbst nicht an
+        "reveal": "always", // Zeigt das Terminal-Panel an
+        "focus": true, // Fokussiert das Terminal aktiv
+        "panel": "shared", // Nutzt dasselbe Terminal-Fenster
+        "showReuseMessage": false, // Blendet die "Terminal will be reused"-Nachricht aus
+        "clear": true // Leert das Terminal vor der Ausführung
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true // Macht diesen Task als Standard-Build-Task verfügbar (Strg+Shift+B)
+      }
+    }
+  ]
+}

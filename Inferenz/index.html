@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIXX Gym Predictor</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- React & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      background-color: #09090b;
+      color: #fafafa;
+    }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-zinc-800 selection:text-white">
+  <div id="root"></div>
+
+  <!-- React Application -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const HORIZONS = [5, 15, 30, 60, 90, 120];
+    const HORIZON_LABELS = ["5 Min", "15 Min", "30 Min", "1 Std", "1.5 Std", "2 Std"];
+
+    const maxY = 50; 
+    const svgWidth = 800;
+    const svgHeight = 320;
+    const padLeft = 45;
+    const padRight = 20;
+    const padTop = 20;
+    const padBottom = 35;
+
+    const plotWidth = svgWidth - padLeft - padRight;
+    const plotHeight = svgHeight - padTop - padBottom;
+
+    // --- Custom UI Components (Shadcn style wrappers) ---
+    const Card = ({ children, className = "" }) => (
+      <div class={`rounded-xl border border-zinc-900 bg-zinc-900/20 backdrop-blur-sm ${className}`}>{children}</div>
+    );
+    const CardHeader = ({ children, className = "" }) => (
+      <div class={`p-4 pb-3 ${className}`}>{children}</div>
+    );
+    const CardTitle = ({ children, className = "" }) => (
+      <h3 class={`text-[10px] font-bold uppercase tracking-wider text-zinc-400 ${className}`}>{children}</h3>
+    );
+    const CardContent = ({ children, className = "" }) => (
+      <div class={`p-4 pt-0 ${className}`}>{children}</div>
+    );
+
+    const Button = ({ children, onClick, disabled, className = "", variant = "default", size = "default" }) => {
+      const base = "inline-flex items-center justify-center rounded text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-700 disabled:pointer-events-none disabled:opacity-50";
+      const variants = {
+        default: "bg-zinc-50 text-zinc-900 hover:bg-zinc-200",
+        outline: "border border-zinc-800 bg-zinc-950 text-zinc-350 hover:text-white hover:bg-zinc-900"
+      };
+      const sizes = {
+        default: "h-9 px-4 py-2",
+        icon: "h-7 w-7"
+      };
+      return (
+        <button onClick={onClick} disabled={disabled} class={`${base} ${variants[variant]} ${sizes[size]} ${className}`}>
+          {children}
+        </button>
+      );
+    };
+
+    const Switch = ({ checked, onCheckedChange }) => (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onCheckedChange(!checked)}
+        class={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-750 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 ${
+          checked ? "bg-emerald-500" : "bg-zinc-800"
+        }`}
+      >
+        <span
+          class={`pointer-events-none block h-3.5 w-3.5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+            checked ? "translate-x-[18px]" : "translate-x-[2px]"
+          }`}
+        />
+      </button>
+    );
+
+    // --- Custom SVG Icons (Lucide replacements) ---
+    const Flame = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+      </svg>
+    );
+    const Cpu = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <rect width="16" height="16" x="4" y="4" rx="2"/>
+        <rect width="6" height="6" x="9" y="9" rx="1"/>
+        <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/>
+      </svg>
+    );
+    const AlertTriangle = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    );
+    const Thermometer = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+      </svg>
+    );
+    const Droplets = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.09 3 12.25c0 2.22 1.8 4.05 4 4.05z"/>
+        <path d="M17 18.5c1.37 0 2.5-1.14 2.5-2.53 0-.72-.36-1.41-1.07-2-.71-.58-1.37-1.17-1.43-2.07-.18.91-.71 1.77-1.43 2.35S14.5 15.25 14.5 15.97c0 1.39 1.13 2.53 2.5 2.53z"/>
+      </svg>
+    );
+    const CloudRain = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="M4 14.899A4.899 4.899 0 0 1 7.024 9a6 6 0 0 1 10.09-3.724 5 5 0 0 1 2.836 8.561"/>
+        <path d="M16 14v6M8 14v6M12 16v6"/>
+      </svg>
+    );
+    const RefreshCw = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+        <path d="M16 16h5v5"/>
+      </svg>
+    );
+    const ChevronDown = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
+    );
+    const Calendar = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    );
+    const ChevronLeft = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+    );
+    const ChevronRight = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={className}>
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    );
+
+    // --- Main Application ---
+    function App() {
+      const [timestamps, setTimestamps] = useState([]);
+      const [timelineIndex, setTimelineIndex] = useState(-1);
+      const [predictionData, setPredictionData] = useState(null);
+      const [isLoading, setIsLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+      // Model selection & comparison states
+      const [selectedModel, setSelectedModel] = useState("best");
+      const [showQuantile, setShowQuantile] = useState(false);
+      const [showAllModels, setShowAllModels] = useState(false);
+
+      // Model Mode
+      const [modelMode, setModelMode] = useState("detailed");
+      const [detailedHorizonIndex, setDetailedHorizonIndex] = useState(1); // Horizon index: 0=5m, 1=15m, 2=30m, 3=60m, 4=90m, 5=120m
+      const [showTypicalProfile, setShowTypicalProfile] = useState(false); // overlay historical profile
+
+      // Drag-to-Scrub State
+      const [isDragging, setIsDragging] = useState(false);
+      const [dragStartX, setDragStartX] = useState(0);
+      const [dragOffset, setDragOffset] = useState(0);
+
+      // Tooltip Hover State
+      const [hoverIndex, setHoverIndex] = useState(null);
+      const [hoverPos, setHoverPos] = useState(null);
+
+      // Date Dropdown & Calendar State
+      const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+      const [availableDates, setAvailableDates] = useState(new Set());
+      const [currentMonth, setCurrentMonth] = useState(new Date());
+
+      const prevMonth = () => {
+        setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+      };
+
+      const nextMonth = () => {
+        setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+      };
+
+      const formatDropdownDate = (dateStr) => {
+        const date = new Date(dateStr);
+        const weekday = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(date);
+        const formatted = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+        return `${weekday}, ${formatted}`;
+      };
+
+      const formatSelectedDateForButton = (isoString) => {
+        if (!isoString) return "";
+        const date = new Date(isoString);
+        const weekday = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(date);
+        const formatted = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+        return `${weekday}, ${formatted}`;
+      };
+
+      const handleDateSelect = (dateStr) => {
+        setIsDateDropdownOpen(false);
+        const currentTS = timestamps[timelineIndex];
+        if (!currentTS) return;
+        
+        const timePart = currentTS.substring(11, 16);
+        let targetIdx = timestamps.findIndex(ts => ts.startsWith(dateStr) && ts.substring(11, 16) === timePart);
+        
+        if (targetIdx === -1) {
+          targetIdx = timestamps.findIndex(ts => ts.startsWith(dateStr));
+        }
+        
+        if (targetIdx !== -1) {
+          setTimelineIndex(targetIdx);
+        }
+      };
+
+      const renderCalendarDays = () => {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+        
+        const firstDay = new Date(year, month, 1);
+        const firstDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+        
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        
+        const days = [];
+        
+        // Prev Month days
+        for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+          const dayNum = daysInPrevMonth - i;
+          days.push({
+            dayNum,
+            dateObj: new Date(year, month - 1, dayNum),
+            isCurrentMonth: false
+          });
+        }
+        
+        // Current Month days
+        for (let i = 1; i <= daysInMonth; i++) {
+          days.push({
+            dayNum: i,
+            dateObj: new Date(year, month, i),
+            isCurrentMonth: true
+          });
+        }
+        
+        // Next Month days to fill grid rows
+        const totalGridDays = Math.ceil(days.length / 7) * 7;
+        const nextMonthDaysCount = totalGridDays - days.length;
+        for (let i = 1; i <= nextMonthDaysCount; i++) {
+          days.push({
+            dayNum: i,
+            dateObj: new Date(year, month + 1, i),
+            isCurrentMonth: false
+          });
+        }
+        
+        return days.map(({ dayNum, dateObj, isCurrentMonth }, idx) => {
+          const y = dateObj.getFullYear();
+          const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+          const d = String(dateObj.getDate()).padStart(2, "0");
+          const dateStr = `${y}-${m}-${d}`;
+          
+          const hasData = availableDates.has(dateStr);
+          const isSelected = timestamps[timelineIndex] && timestamps[timelineIndex].startsWith(dateStr);
+          const isTrainingCutoff = dateStr === "2026-06-04";
+          
+          let btnClass = "h-7 w-7 text-[10px] font-mono flex items-center justify-center rounded transition-all focus:outline-none ";
+          let isDisabled = !hasData;
+          
+          if (!isCurrentMonth) {
+            btnClass += "text-zinc-800 cursor-not-allowed select-none ";
+            isDisabled = true;
+          } else if (isSelected) {
+            btnClass += "bg-emerald-500 text-white font-bold shadow-md shadow-emerald-500/20 ";
+          } else if (hasData) {
+            btnClass += "text-zinc-350 hover:bg-zinc-800 hover:text-white cursor-pointer ";
+          } else {
+            btnClass += "text-zinc-700 cursor-not-allowed select-none ";
+          }
+          
+          if (isTrainingCutoff && isCurrentMonth) {
+            btnClass += "ring-1 ring-amber-500 ring-offset-1 ring-offset-zinc-950 ";
+          }
+          
+          let titleText = hasData ? `Daten für ${formatDropdownDate(dateStr)} verfügbar` : "Keine Daten";
+          if (isTrainingCutoff) {
+            titleText += " (Letztes Trainingsdatum)";
+          }
+          
+          return (
+            <button
+              key={`${dateStr}-${idx}`}
+              disabled={isDisabled}
+              onClick={() => handleDateSelect(dateStr)}
+              class={btnClass}
+              title={titleText}
+            >
+              <span class="relative">
+                {dayNum}
+                {isTrainingCutoff && isCurrentMonth && (
+                  <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full" />
+                )}
+              </span>
+            </button>
+          );
+        });
+      };
+
+      // Load all timestamps
+      useEffect(() => {
+        async function loadTimestamps() {
+          setIsLoading(true);
+          setError(null);
+          try {
+            const tsRes = await fetch("/api/timestamps");
+            if (!tsRes.ok) throw new Error("Fehler beim Abrufen der Zeitstempel");
+            const tsData = await tsRes.json();
+            
+            if (tsData.timestamps && tsData.timestamps.length > 0) {
+              setTimestamps(tsData.timestamps);
+              const dateSet = new Set(tsData.timestamps.map(ts => ts.substring(0, 10)));
+              setAvailableDates(dateSet);
+              setTimelineIndex(tsData.timestamps.length - 1); // latest by default
+            } else {
+              throw new Error("Keine Messdaten im Datensatz vorhanden.");
+            }
+          } catch (err) {
+            setError(err.message || "Fehler beim Laden der Inferenzdaten.");
+            setIsLoading(false);
+          }
+        }
+        loadTimestamps();
+      }, [refreshTrigger]);
+
+      // Sync calendar month with selected timestamp
+      useEffect(() => {
+        if (timestamps.length > 0 && timelineIndex >= 0) {
+          const currentTS = timestamps[timelineIndex];
+          if (currentTS) {
+            setCurrentMonth(new Date(currentTS));
+          }
+        }
+      }, [timelineIndex, timestamps]);
+
+      // Load prediction data when timelineIndex changes
+      useEffect(() => {
+        if (timestamps.length === 0 || timelineIndex < 0) return;
+        const timestamp = timestamps[timelineIndex];
+        let active = true;
+
+        async function fetchPrediction() {
+          setIsLoading(true);
+          setError(null);
+          try {
+            const predRes = await fetch(`/api/predict?timestamp=${encodeURIComponent(timestamp)}`);
+            if (!predRes.ok) throw new Error("Fehler bei der Vorhersage-Berechnung");
+            const predData = await predRes.json();
+            
+            if (active) {
+              setPredictionData(predData);
+            }
+          } catch (err) {
+            if (active) {
+              setError(err.message || "Fehler bei der Vorhersage.");
+            }
+          } finally {
+            if (active) setIsLoading(false);
+          }
+        }
+        fetchPrediction();
+        return () => {
+          active = false;
+        };
+      }, [timelineIndex, timestamps]);
+
+
+      const formatTimeOnly = (isoString) => {
+        return isoString.substring(11, 16);
+      };
+
+      const activeDetailedHorizon = HORIZONS[detailedHorizonIndex];
+
+      // Calculate future prediction steps dynamically
+      const numFutureSteps = modelMode === "quick" && predictionData 
+        ? predictionData.future_data.length - 1 
+        : 24; 
+
+      const totalSteps = 12 + numFutureSteps;
+
+      // Populate chart data points
+      const chartPoints = [];
+      if (predictionData) {
+        predictionData.past_data.forEach((p, i) => {
+          chartPoints.push({ 
+            type: "past", 
+            index: i, 
+            timestamp: p.timestamp, 
+            actual: p.utilization, 
+            quickPred: null, 
+            detailedPred: null,
+            isImputed: p.is_imputed,
+            typicalMean: p.typical_mean,
+            typicalCiLower: p.typical_ci_lower,
+            typicalCiUpper: p.typical_ci_upper
+          });
+        });
+        
+        const qModelVals = predictionData.quick_predictions.models[selectedModel] || predictionData.quick_predictions.models['best'];
+        const dModelVals = predictionData.detailed_predictions.models[selectedModel] || predictionData.detailed_predictions.models['best'];
+
+        chartPoints.push({
+          type: "current",
+          index: 12,
+          timestamp: predictionData.actual_timestamp,
+          actual: predictionData.current_utilization,
+          quickPred: qModelVals.find((q) => q.timestamp.startsWith(predictionData.actual_timestamp.substring(0, 16)))?.value ?? null,
+          detailedPred: null,
+          isImputed: predictionData.is_imputed,
+          typicalMean: predictionData.past_data[12]?.typical_mean ?? null,
+          typicalCiLower: predictionData.past_data[12]?.typical_ci_lower ?? null,
+          typicalCiUpper: predictionData.past_data[12]?.typical_ci_upper ?? null
+        });
+        
+        predictionData.future_data.slice(1).forEach((f, i) => {
+          const idx = 13 + i;
+          if (modelMode === "detailed" && idx > 36) return;
+
+          const timestamp = f.timestamp;
+          const qVal = qModelVals.find((q) => q.timestamp.startsWith(timestamp.substring(0, 16)))?.value ?? null;
+          
+          const minsDiff = (idx - 12) * 5;
+          const dVal = dModelVals.find((d) => Math.abs(d.horizon_mins - minsDiff) < 1)?.value ?? null;
+          
+          chartPoints.push({ 
+            type: "future", 
+            index: idx, 
+            timestamp: timestamp, 
+            actual: f.utilization, 
+            quickPred: qVal, 
+            detailedPred: dVal,
+            isImputed: f.is_imputed,
+            typicalMean: f.typical_mean,
+            typicalCiLower: f.typical_ci_lower,
+            typicalCiUpper: f.typical_ci_upper
+          });
+        });
+      }
+
+      const trainingCutoffPoint = chartPoints.find(p => p.timestamp && p.timestamp.startsWith("2026-06-04T11:05"));
+
+      const getX = (index) => padLeft + (index * plotWidth) / totalSteps;
+      const getY = (val) => padBottom + plotHeight - (val * plotHeight) / maxY;
+
+      const getModelPath = (modelName) => {
+        if (!predictionData || chartPoints.length === 0) return "";
+        const currentPoint = chartPoints[12];
+        let path = `M ${getX(12)} ${getY(currentPoint.actual)}`;
+        
+        if (modelMode === "quick") {
+          const modelVals = predictionData.quick_predictions.models[modelName];
+          if (!modelVals) return "";
+          for (let i = 13; i < chartPoints.length; i++) {
+            const timestamp = chartPoints[i].timestamp;
+            const val = modelVals.find(v => v.timestamp.startsWith(timestamp.substring(0, 16)))?.value ?? null;
+            if (val !== null) {
+              path += ` L ${getX(chartPoints[i].index)} ${getY(val)}`;
+            }
+          }
+        } else {
+          const modelVals = predictionData.detailed_predictions.models[modelName];
+          if (!modelVals) return "";
+          for (let i = 13; i < chartPoints.length; i++) {
+            if (modelMode === "detailed" && chartPoints[i].index > 36) break;
+            const minsDiff = (chartPoints[i].index - 12) * 5;
+            const val = modelVals.find(v => Math.abs(v.horizon_mins - minsDiff) < 1)?.value ?? null;
+            if (val !== null) {
+              path += ` L ${getX(chartPoints[i].index)} ${getY(val)}`;
+            }
+          }
+        }
+        return path;
+      };
+
+      // Scrub calculations
+      const stepWidth = plotWidth / totalSteps;
+      const indexOffset = -Math.round(dragOffset / stepWidth);
+      const activeIndex = Math.min(totalSteps - 1, Math.max(0, 12 + indexOffset));
+      const activePoint = chartPoints[activeIndex];
+      
+      const currentUtilization = activePoint && activePoint.actual !== null ? activePoint.actual : (predictionData?.current_utilization ?? 0);
+      const quantizedDragOffset = -indexOffset * stepWidth;
+
+      const handleMouseDown = (e) => {
+        if (!predictionData) return;
+        setIsDragging(true);
+        setDragStartX(e.clientX);
+        setDragOffset(0);
+      };
+
+      const handleMouseMove = (e) => {
+        if (!predictionData) return;
+        const svg = e.currentTarget;
+        const rect = svg.getBoundingClientRect();
+        
+        if (isDragging) {
+          const deltaX = e.clientX - dragStartX;
+          const svgScale = svgWidth / rect.width;
+          const offsetInSvgPixels = deltaX * svgScale;
+          
+          const idxOffset = -Math.round(offsetInSvgPixels / stepWidth);
+          const targetTimelineIndex = timelineIndex + idxOffset;
+          
+          if (targetTimelineIndex >= 0 && targetTimelineIndex < timestamps.length) {
+            setDragOffset(offsetInSvgPixels);
+          }
+        } else {
+          const x = e.clientX - rect.left;
+          const relativeX = (x / rect.width) * svgWidth;
+          const dataX = relativeX - padLeft;
+          const index = Math.min(totalSteps - 1, Math.max(0, Math.round(dataX / stepWidth)));
+          
+          setHoverIndex(index);
+          setHoverPos({ 
+            x: (padLeft + index * stepWidth) * (rect.width / svgWidth), 
+            y: 80 
+          });
+        }
+      };
+
+      const handleMouseUpOrLeave = () => {
+        if (isDragging) {
+          const idxOffset = -Math.round(dragOffset / stepWidth);
+          if (idxOffset !== 0) {
+            const targetIndex = Math.min(timestamps.length - 1, Math.max(0, timelineIndex + idxOffset));
+            setTimelineIndex(targetIndex);
+          }
+          setIsDragging(false);
+          setDragOffset(0);
+        } else {
+          setHoverIndex(null);
+          setHoverPos(null);
+        }
+      };
+
+      const activeHoverPoint = hoverIndex !== null 
+        ? chartPoints.find(p => p.index === hoverIndex && (hoverIndex === 12 ? p.type === "current" : true)) 
+        : null;
+
+      // Predictions computation
+      let predictedUtilization = 0;
+      let activeAlgo = "N/A";
+      let activeHorizonLabel = "";
+      let targetTimeStr = "";
+
+      const isHovering = hoverIndex !== null && !isDragging && activeHoverPoint;
+      const hoverPredVal = isHovering
+        ? (modelMode === "quick" ? activeHoverPoint.quickPred : activeHoverPoint.detailedPred)
+        : null;
+
+      if (predictionData) {
+        if (modelMode === "quick") {
+          activeAlgo = selectedModel === "best" ? predictionData.quick_predictions.algo : selectedModel;
+          if (hoverPredVal !== null) {
+            predictedUtilization = hoverPredVal;
+            const mins = (activeHoverPoint.index - 12) * 5;
+            let formattedMins = `${mins} Min`;
+            if (mins >= 60) {
+              const hrs = mins / 60;
+              formattedMins = hrs % 1 === 0 ? `${hrs.toFixed(0)} Std` : `${hrs.toFixed(1)} Std`;
+            }
+            activeHorizonLabel = mins === 0 ? "Echtzeit" : `in ${formattedMins}`;
+            targetTimeStr = `${formatTimeOnly(activeHoverPoint.timestamp)} Uhr`;
+          } else {
+            predictedUtilization = (activePoint && activePoint.quickPred !== null) 
+              ? activePoint.quickPred 
+              : (predictionData.quick_predictions.models[selectedModel]?.find((v) => v.timestamp === predictionData.actual_timestamp)?.value ?? currentUtilization);
+            activeHorizonLabel = "Echtzeit";
+            targetTimeStr = activePoint ? `${formatTimeOnly(activePoint.timestamp)} Uhr` : "";
+          }
+        } else {
+          if (hoverPredVal !== null) {
+            predictedUtilization = hoverPredVal;
+            const mins = (activeHoverPoint.index - 12) * 5;
+            const horizonIdx = [5, 15, 30, 60, 90, 120].indexOf(mins);
+            activeHorizonLabel = horizonIdx !== -1 ? `in ${HORIZON_LABELS[horizonIdx]}` : `in ${mins} Min`;
+            activeAlgo = selectedModel === "best" ? (predictionData.detailed_predictions.algos[mins.toString()] || "N/A") : selectedModel;
+            targetTimeStr = `${formatTimeOnly(activeHoverPoint.timestamp)} Uhr`;
+          } else {
+            const horizonSteps = activeDetailedHorizon / 5;
+            const targetIndex = activeIndex + horizonSteps;
+            const targetPoint = chartPoints.find(p => p.index === targetIndex && p.type === "future");
+            const modelVals = predictionData.detailed_predictions.models[selectedModel] || predictionData.detailed_predictions.models['best'];
+            const valObj = modelVals ? modelVals.find(v => v.horizon_mins === activeDetailedHorizon) : null;
+            predictedUtilization = (targetPoint && targetPoint.detailedPred !== null) 
+              ? targetPoint.detailedPred 
+              : (valObj ? valObj.value : 0);
+            activeAlgo = selectedModel === "best" ? (predictionData.detailed_predictions.algos[activeDetailedHorizon.toString()] || "N/A") : selectedModel;
+            activeHorizonLabel = `in ${HORIZON_LABELS[detailedHorizonIndex]}`;
+            const targetIndexTime = 12 + horizonSteps;
+            const targetPointTime = chartPoints.find(p => p.index === targetIndexTime && p.type === "future");
+            targetTimeStr = targetPointTime ? `${formatTimeOnly(targetPointTime.timestamp)} Uhr` : "N/A";
+          }
+        }
+      }
+
+      const getUtilizationStyle = (val) => {
+        if (val === null) return "text-zinc-550 bg-zinc-500/5 border-zinc-500/10";
+        if (val < 20) return "text-emerald-400 bg-emerald-500/5 border-emerald-500/10";
+        if (val < 55) return "text-teal-400 bg-teal-500/5 border-teal-500/10";
+        if (val < 75) return "text-amber-400 bg-amber-500/5 border-amber-500/10";
+        return "text-rose-400 bg-rose-500/5 border-rose-500/10";
+      };
+
+      let actualPath = "";
+      let actualAreaPath = "";
+      let typicalAreaPath = "";
+      let typicalMeanPath = "";
+      
+      if (chartPoints.length > 0) {
+        if (showTypicalProfile) {
+          const meanPoints = chartPoints.filter(p => p.typicalMean !== undefined && p.typicalMean !== null);
+          if (meanPoints.length > 0) {
+            typicalMeanPath = `M ${getX(meanPoints[0].index)} ${getY(meanPoints[0].typicalMean)}`;
+            for (let i = 1; i < meanPoints.length; i++) {
+              typicalMeanPath += ` L ${getX(meanPoints[i].index)} ${getY(meanPoints[i].typicalMean)}`;
+            }
+            
+            let areaPath = `M ${getX(meanPoints[0].index)} ${getY(meanPoints[0].typicalCiUpper)}`;
+            for (let i = 1; i < meanPoints.length; i++) {
+              areaPath += ` L ${getX(meanPoints[i].index)} ${getY(meanPoints[i].typicalCiUpper)}`;
+            }
+            for (let i = meanPoints.length - 1; i >= 0; i--) {
+              areaPath += ` L ${getX(meanPoints[i].index)} ${getY(meanPoints[i].typicalCiLower)}`;
+            }
+            areaPath += " Z";
+            typicalAreaPath = areaPath;
+          }
+        }
+
+        const validActualPoints = chartPoints.filter(p => p.actual !== null);
+        if (validActualPoints.length > 0) {
+          actualPath = `M ${getX(validActualPoints[0].index)} ${getY(validActualPoints[0].actual)}`;
+          actualAreaPath = `M ${getX(validActualPoints[0].index)} ${getY(0)} L ${getX(validActualPoints[0].index)} ${getY(validActualPoints[0].actual)}`;
+          for (let i = 1; i < validActualPoints.length; i++) {
+            actualPath += ` L ${getX(validActualPoints[i].index)} ${getY(validActualPoints[i].actual)}`;
+            actualAreaPath += ` L ${getX(validActualPoints[i].index)} ${getY(validActualPoints[i].actual)}`;
+          }
+          actualAreaPath += ` L ${getX(validActualPoints[validActualPoints.length - 1].index)} ${getY(0)} Z`;
+        }
+      }
+
+      // X-Axis labels generation
+      const labelIndices = [0, 12];
+      if (modelMode === "detailed") {
+        labelIndices.push(24, 36);
+      } else {
+        for (let i = 36; i < totalSteps; i += 24) {
+          labelIndices.push(i);
+        }
+        const lastIdx = totalSteps - 1;
+        if (lastIdx > 12 && (labelIndices.length === 0 || lastIdx - labelIndices[labelIndices.length - 1] > 12)) {
+          labelIndices.push(lastIdx);
+        }
+      }
+
+      const getRelativeLabel = (idx) => {
+        if (idx === 12) return "Jetzt";
+        if (idx === 0) return "-1h";
+        const hoursDiff = (idx - 12) * 5 / 60;
+        return hoursDiff % 1 === 0 ? `+${hoursDiff.toFixed(0)}h` : `+${hoursDiff.toFixed(1)}h`;
+      };
+
+      return (
+        <div class="min-h-screen bg-[#09090b] text-zinc-50 flex flex-col font-sans antialiased">
+          
+          {/* Header */}
+          <header class="border-b border-zinc-900 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-30 py-3">
+            <div class="max-w-[1400px] mx-auto px-6 flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <Flame className="size-5 text-emerald-400 animate-pulse text-emerald-400 h-5 w-5" />
+                <h1 class="text-sm font-semibold tracking-tight text-zinc-200">
+                  FIXX Gym Predictor
+                </h1>
+              </div>
+
+              <div class="flex items-center gap-4 relative">
+                {timestamps[timelineIndex] && (
+                  <div class="relative">
+                    <button 
+                      onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                      class="text-[10px] font-mono text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-850 px-2.5 py-1.5 rounded border border-zinc-800 flex items-center gap-2 transition-colors focus:outline-none"
+                    >
+                      <Calendar className="size-3.5 text-emerald-400 h-3.5 w-3.5" />
+                      <span>Fokus: {formatSelectedDateForButton(timestamps[timelineIndex])}</span>
+                      <ChevronDown className="size-3 text-zinc-500 h-3 w-3" />
+                    </button>
+                    
+                    {isDateDropdownOpen && (
+                      <>
+                        <div class="fixed inset-0 z-40 cursor-default" onClick={() => setIsDateDropdownOpen(false)}></div>
+                        <div class="absolute right-0 mt-2 w-[240px] rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-zinc-200 shadow-xl shadow-black/40 z-50 transition-all select-none">
+                          
+                          {/* Calendar Month Header */}
+                          <div class="flex justify-between items-center mb-3 px-0.5">
+                            <button 
+                              onClick={prevMonth}
+                              class="p-1 rounded hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors focus:outline-none"
+                            >
+                              <ChevronLeft className="size-4 h-4 w-4" />
+                            </button>
+                            <span class="text-[11px] font-semibold text-zinc-200 tracking-tight capitalize">
+                              {currentMonth.toLocaleDateString("de-DE", { month: "long", year: "numeric" })}
+                            </span>
+                            <button 
+                              onClick={nextMonth}
+                              class="p-1 rounded hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors focus:outline-none"
+                            >
+                              <ChevronRight className="size-4 h-4 w-4" />
+                            </button>
+                          </div>
+
+                          {/* Weekdays Row */}
+                          <div class="grid grid-cols-7 gap-1 text-center text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                            <span>Mo</span>
+                            <span>Di</span>
+                            <span>Mi</span>
+                            <span>Do</span>
+                            <span>Fr</span>
+                            <span>Sa</span>
+                            <span>So</span>
+                          </div>
+
+                          {/* Days Grid */}
+                          <div class="grid grid-cols-7 gap-1">
+                            {renderCalendarDays()}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setRefreshTrigger(prev => prev + 1)}
+                  disabled={isLoading}
+                  className="size-7"
+                >
+                  <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""} h-3.5 w-3.5`} />
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main class="flex-1 max-w-[1400px] w-full mx-auto px-6 py-6 flex flex-col gap-6">
+            
+            {error && (
+              <div class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-350 flex items-center gap-2.5 text-xs font-mono">
+                <AlertTriangle className="size-4 shrink-0 text-rose-400 h-4 w-4" />
+                <span class="flex-1">{error}</span>
+              </div>
+            )}
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* Controls Sidebar */}
+              <div class="lg:col-span-3 flex flex-col gap-6">
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Modell-Konfiguration</CardTitle>
+                  </CardHeader>
+                  <CardContent class="flex flex-col gap-5 pb-5">
+                    
+                    {/* Model Toggle */}
+                    <div class="flex items-center justify-between p-2.5 bg-zinc-950/60 rounded-md border border-zinc-900">
+                      <span class="text-xs font-semibold text-zinc-300">Modelltyp</span>
+                      <div class="flex items-center gap-1.5">
+                        <span class={`text-[10px] font-mono ${modelMode === 'quick' ? 'text-emerald-400' : 'text-zinc-500'}`}>Quick</span>
+                        <Switch
+                          checked={modelMode === "detailed"}
+                          onCheckedChange={(checked) => setModelMode(checked ? "detailed" : "quick")}
+                        />
+                        <span class={`text-[10px] font-mono ${modelMode === 'detailed' ? 'text-emerald-400' : 'text-zinc-500'}`}>Detailed</span>
+                      </div>
+                    </div>
+
+                    {/* Model Selector Dropdown */}
+                    <div class="flex flex-col gap-1.5">
+                      <label class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Prädiktions-Modell</label>
+                      <select 
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        class="w-full bg-zinc-950 text-xs text-zinc-300 border border-zinc-800 px-2.5 py-1.5 rounded focus:outline-none focus:border-zinc-700 transition-colors"
+                      >
+                        <option value="best">Bestes Modell (Auto-Auswahl)</option>
+                        <option value="xgboost">XGBoost Regressor</option>
+                        <option value="gradientboosting">Gradient Boosting (MSE)</option>
+                        <option value="randomforest">Random Forest</option>
+                        <option value="ridge">Ridge Regression (L2)</option>
+                        <option value="lasso">Lasso Regression (L1)</option>
+                        <option value="elasticnet">ElasticNet (L1 + L2)</option>
+                        <option value="gbquantile90">Quantil-Regression (90% Schranke)</option>
+                      </select>
+                    </div>
+
+                    {/* Quantile Toggle */}
+                    <div class="flex items-center justify-between p-2.5 bg-zinc-950/60 rounded-md border border-zinc-900">
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-zinc-300">Sicherheitsgrenze</span>
+                        <span class="text-[9px] text-zinc-500 font-mono">90% Quantil anzeigen</span>
+                      </div>
+                      <Switch
+                        checked={showQuantile}
+                        onCheckedChange={setShowQuantile}
+                      />
+                    </div>
+
+                    {/* All Models Toggle */}
+                    <div class="flex items-center justify-between p-2.5 bg-zinc-950/60 rounded-md border border-zinc-900">
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-zinc-300">Modell-Wettstreit</span>
+                        <span class="text-[9px] text-zinc-500 font-mono">Alle Modelle gleichzeitig</span>
+                      </div>
+                      <Switch
+                        checked={showAllModels}
+                        onCheckedChange={setShowAllModels}
+                      />
+                    </div>
+
+                    {/* Typical Profile Toggle */}
+                    <div class="flex items-center justify-between p-2.5 bg-zinc-950/60 rounded-md border border-zinc-900">
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-zinc-300">Typischer Verlauf</span>
+                        <span class="text-[9px] text-zinc-500 font-mono">Gewöhnliche Last einblenden</span>
+                      </div>
+                      <Switch
+                        checked={showTypicalProfile}
+                        onCheckedChange={setShowTypicalProfile}
+                      />
+                    </div>
+
+                    {/* Prognose-Zeitraum Slider */}
+                    <div class={`flex flex-col gap-2.5 p-3 bg-zinc-950/50 rounded-lg border border-zinc-900/80 transition-all ${modelMode === 'quick' ? 'opacity-30 pointer-events-none' : ''}`}>
+                      <div class="flex justify-between items-center">
+                        <span class="text-emerald-500 font-bold text-[10px] uppercase tracking-wider">Prognose-Horizont</span>
+                        <span class="text-xs font-bold font-mono text-emerald-400">
+                          {HORIZON_LABELS[detailedHorizonIndex]}
+                        </span>
+                      </div>
+                      <div class="px-1 mt-1">
+                        <input
+                          type="range"
+                          min="0"
+                          max="5"
+                          step="1"
+                          value={detailedHorizonIndex}
+                          onChange={(e) => setDetailedHorizonIndex(parseInt(e.target.value))}
+                          class="w-full accent-emerald-500 bg-zinc-800 rounded-lg appearance-none h-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                        />
+                      </div>
+                      <div class="flex justify-between text-[8px] font-mono text-zinc-555 px-0.5">
+                        <span>5m</span>
+                        <span>15m</span>
+                        <span>30m</span>
+                        <span>1h</span>
+                        <span>1.5h</span>
+                        <span>2h</span>
+                      </div>
+                    </div>
+
+                  </CardContent>
+                </Card>
+
+              </div>
+              
+              {/* Main Panel */}
+              <div class="lg:col-span-9 flex flex-col gap-6">
+                
+                {/* Metrics Row */}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
+                  {/* Actual Value */}
+                  <div class={`p-4 rounded-xl border flex flex-col justify-between ${getUtilizationStyle(currentUtilization)}`}>
+                    <div class="flex justify-between items-center text-zinc-450">
+                      <span class="text-[10px] font-mono uppercase tracking-wider">
+                        Live
+                      </span>
+                      <Flame className="size-4 text-rose-500 h-4 w-4" />
+                    </div>
+                    <div class="mt-3">
+                      <span class="text-3xl font-extrabold font-mono tracking-tight">{predictionData ? `${currentUtilization.toFixed(1)}%` : "N/A"}</span>
+                    </div>
+                  </div>
+
+                  {/* Forecast Value */}
+                  <div class="p-4 rounded-xl border border-zinc-900 bg-zinc-900/10 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-zinc-450">
+                      <span class="text-[10px] font-mono uppercase tracking-wider">
+                        Prognose ({activeHorizonLabel}{targetTimeStr ? ` • ${targetTimeStr}` : ""})
+                      </span>
+                      <Cpu className="size-4 text-emerald-400 h-4 w-4" />
+                    </div>
+                    <div class="mt-3 flex items-baseline justify-between">
+                      <span class="text-3xl font-extrabold font-mono tracking-tight text-emerald-400">{predictionData ? `${predictedUtilization.toFixed(1)}%` : "--%"}</span>
+                      <span class="text-[9px] font-mono text-zinc-550">Modell: {activeAlgo.toUpperCase()}</span>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* SVG Visual Graph */}
+                <Card>
+                  <CardContent class="pt-5 pb-4">
+                    
+                    <div class="relative">
+                      {isLoading ? (
+                        <div class="h-[320px] w-full bg-zinc-950/40 rounded-xl border border-zinc-900 flex items-center justify-center font-mono text-xs text-zinc-500 gap-2">
+                          <span class="size-2 bg-emerald-400 rounded-full animate-ping h-2 w-2" />
+                          Lade aktuelle Sensordaten...
+                        </div>
+                      ) : (
+                        <svg
+                          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                          class="w-full h-auto bg-zinc-950/40 rounded-xl border border-zinc-900 overflow-visible cursor-ew-resize select-none"
+                          onMouseDown={handleMouseDown}
+                          onMouseMove={handleMouseMove}
+                          onMouseUp={handleMouseUpOrLeave}
+                          onMouseLeave={handleMouseUpOrLeave}
+                        >
+                          <defs>
+                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.12" />
+                              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
+                            </linearGradient>
+                            <clipPath id="chartClip">
+                              <rect x={padLeft} y={0} width={plotWidth} height={svgHeight} />
+                            </clipPath>
+                            <clipPath id="labelsClip">
+                              <rect x={padLeft - 25} y={0} width={plotWidth + 45} height={svgHeight} />
+                            </clipPath>
+                          </defs>
+
+                          {/* Gridlines */}
+                          {[0, 10, 20, 30, 40, 50].map(val => (
+                            <g key={val}>
+                              <line x1={padLeft} y1={getY(val)} x2={svgWidth - padRight} y2={getY(val)} stroke="#1e1e22" stroke-width="1" />
+                              <text x={padLeft - 8} y={getY(val) + 3} fill="#52525b" font-size="8" text-anchor="end" font-family="monospace">{val}%</text>
+                            </g>
+                          ))}
+
+                          {/* Line Paths */}
+                          <g clipPath="url(#chartClip)">
+                            <g transform={`translate(${quantizedDragOffset}, 0)`}>
+                              {/* Past Shading */}
+                              <rect x={padLeft} y={padTop} width={getX(12) - padLeft} height={plotHeight} fill="rgba(39, 39, 42, 0.12)" />
+
+                              {/* Typical Profile Overlay */}
+                              {showTypicalProfile && typicalAreaPath && (
+                                <path d={typicalAreaPath} fill="#14b8a6" fill-opacity="0.08" />
+                              )}
+                              {showTypicalProfile && typicalMeanPath && (
+                                <path d={typicalMeanPath} fill="none" stroke="#14b8a6" stroke-dasharray="3 3" stroke-width="1.5" stroke-opacity="0.4" />
+                              )}
+
+                              {/* Actual Area & Line */}
+                              <path d={actualAreaPath} fill="url(#areaGrad)" />
+                              <path d={actualPath} fill="none" stroke="#3b82f6" stroke-width="2" />
+
+                              {/* All Models (Wettstreit) */}
+                              {showAllModels && (() => {
+                                const MODEL_COLORS = {
+                                  randomforest: "#ec4899", // pink-500
+                                  gradientboosting: "#10b981", // emerald-500
+                                  xgboost: "#8b5cf6", // violet-500
+                                  ridge: "#f97316", // orange-500
+                                  lasso: "#3b82f6", // blue-500
+                                  elasticnet: "#14b8a6", // teal-500
+                                  gbquantile90: "#f43f5e" // rose-500
+                                };
+                                return ["randomforest", "gradientboosting", "xgboost", "ridge", "lasso", "elasticnet", "gbquantile90"].map(name => {
+                                  if (name === selectedModel) return null;
+                                  const path = getModelPath(name);
+                                  if (!path) return null;
+                                  return (
+                                    <path 
+                                      key={name}
+                                      d={path} 
+                                      fill="none" 
+                                      stroke={MODEL_COLORS[name]} 
+                                      stroke-width="1.2" 
+                                      stroke-opacity="0.3" 
+                                      stroke-dasharray={name === 'gbquantile90' ? '3 3' : ''}
+                                    />
+                                  );
+                                });
+                              })()}
+
+                              {/* Quantile Prediction Line (Sicherheitsgrenze) */}
+                              {showQuantile && selectedModel !== "gbquantile90" && !showAllModels && (() => {
+                                const path = getModelPath("gbquantile90");
+                                if (!path) return null;
+                                return <path d={path} fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="4 3" />;
+                              })()}
+
+                              {/* Selected Model Prediction Line */}
+                              {(() => {
+                                const path = getModelPath(selectedModel);
+                                if (!path) return null;
+                                const isQuick = modelMode === "quick";
+                                return (
+                                  <path 
+                                    d={path} 
+                                    fill="none" 
+                                    stroke={isQuick ? "#10b981" : "#f59e0b"} 
+                                    stroke-width="2.2" 
+                                    stroke-dasharray="" 
+                                  />
+                                );
+                              })()}
+
+                              {/* Detailed dots */}
+                              {modelMode === "detailed" && chartPoints.map((p, i) => {
+                                if (p.detailedPred === null) return null;
+                                const horizonSteps = activeDetailedHorizon / 5;
+                                const targetIndex = 12 + horizonSteps;
+                                const isSelected = p.index === targetIndex;
+                                
+                                return (
+                                  <g key={i}>
+                                    {isSelected && (
+                                      <circle cx={getX(p.index)} cy={getY(p.detailedPred)} r="7" fill="none" stroke="#f59e0b" stroke-width="1.5" class="animate-ping" style={{ transformOrigin: `${getX(p.index)}px ${getY(p.detailedPred)}px` }} />
+                                    )}
+                                    <circle cx={getX(p.index)} cy={getY(p.detailedPred)} r={isSelected ? "4.5" : "3"} fill={isSelected ? "#f59e0b" : "#b45309"} stroke="#09090b" stroke-width="1">
+                                      <title>{`Horizon ${(p.index - 12) * 5}m: ${p.detailedPred.toFixed(1)}%`}</title>
+                                    </circle>
+                                  </g>
+                                );
+                              })}
+
+                              {/* Interactive Hover Indicators */}
+                              {hoverIndex !== null && !isDragging && activeHoverPoint && (
+                                <g>
+                                  <line x1={getX(hoverIndex)} y1={padTop} x2={getX(hoverIndex)} y2={padBottom + plotHeight} stroke="#3f3f46" stroke-width="1" stroke-dasharray="2 2" />
+                                  {activeHoverPoint.actual !== null && <circle cx={getX(hoverIndex)} cy={getY(activeHoverPoint.actual)} r="4" fill="#3b82f6" stroke="#fff" stroke-width="1" />}
+                                  {modelMode === "quick" && activeHoverPoint.quickPred !== null && <circle cx={getX(hoverIndex)} cy={getY(activeHoverPoint.quickPred)} r="4" fill="#10b981" stroke="#fff" stroke-width="1" />}
+                                  {modelMode === "detailed" && activeHoverPoint.detailedPred !== null && <circle cx={getX(hoverIndex)} cy={getY(activeHoverPoint.detailedPred)} r="4" fill="#f59e0b" stroke="#fff" stroke-width="1" />}
+                                </g>
+                              )}
+                            </g>
+                          </g>
+
+                          {/* X-Axis Labels */}
+                          <g clipPath="url(#labelsClip)">
+                            <g transform={`translate(${quantizedDragOffset}, 0)`}>
+                              {/* Imputed indicators */}
+                              {chartPoints.map((p, i) => {
+                                if (p.isImputed === 1) {
+                                  const halfStep = stepWidth / 2;
+                                  return (
+                                    <line
+                                      key={`gap-line-${i}`}
+                                      x1={getX(p.index) - halfStep}
+                                      y1={padBottom + plotHeight}
+                                      x2={getX(p.index) + halfStep}
+                                      y2={padBottom + plotHeight}
+                                      stroke="#f59e0b"
+                                      stroke-width="3.5"
+                                      stroke-opacity="0.6"
+                                    />
+                                  );
+                                }
+                                return null;
+                              })}
+
+                              {/* Time labels */}
+                              {labelIndices.map(idx => {
+                                const point = chartPoints.find(p => p.index === idx && (idx === 12 ? p.type === "current" : true));
+                                if (!point) return null;
+                                return (
+                                  <g key={idx}>
+                                    <text x={getX(idx)} y={padBottom + plotHeight + 15} fill="#52525b" font-size="8" text-anchor="middle" font-family="monospace">
+                                      {formatTimeOnly(point.timestamp)}
+                                    </text>
+                                    <text x={getX(idx)} y={padBottom + plotHeight + 25} fill="#3f3f46" font-size="7" text-anchor="middle" font-family="monospace">
+                                      {getRelativeLabel(idx)}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </g>
+                          </g>
+
+                          {/* Training Cutoff Line */}
+                          {trainingCutoffPoint && (
+                            <g>
+                              <line
+                                x1={getX(trainingCutoffPoint.index)}
+                                y1={padTop}
+                                x2={getX(trainingCutoffPoint.index)}
+                                y2={padBottom + plotHeight}
+                                stroke="#f59e0b"
+                                stroke-width="1.5"
+                                stroke-dasharray="3 3"
+                              />
+                              <text
+                                x={getX(trainingCutoffPoint.index) + 5}
+                                y={padTop + 24}
+                                fill="#f59e0b"
+                                font-size="7"
+                                font-weight="bold"
+                                font-family="monospace"
+                                text-anchor="start"
+                              >
+                                TRAININGS-ENDE (11:05 Uhr)
+                              </text>
+                            </g>
+                          )}
+
+                          {/* Static split line */}
+                          <line x1={getX(12)} y1={padTop} x2={getX(12)} y2={padBottom + plotHeight} stroke="#10b981" stroke-width="2" stroke-dasharray="3 3" />
+                          <text x={getX(12) - 8} y={padTop + 12} fill="#10b981" font-size="8" text-anchor="end" font-family="monospace">VERGANGENHEIT</text>
+                          <text x={getX(12) + 8} y={padTop + 12} fill="#10b981" font-size="8" text-anchor="start" font-family="monospace">PROGNOSE</text>
+                        </svg>
+                      )}
+
+                      {/* Tooltip */}
+                      {hoverIndex !== null && !isDragging && activeHoverPoint && hoverPos && (
+                        <div 
+                          class="absolute bg-zinc-950/95 border border-zinc-900 rounded p-2.5 shadow-2xl text-[10px] font-mono text-zinc-350 w-44 pointer-events-none z-50"
+                          style={{ 
+                            left: `${Math.min(550, hoverPos.x + 10)}px`, 
+                            top: `30px`
+                          }}
+                        >
+                          <p class="font-semibold text-zinc-200 border-b border-zinc-900 pb-0.5 mb-1 flex justify-between">
+                            <span>⏱️ {formatTimeOnly(activeHoverPoint.timestamp)} Uhr</span>
+                            {activeHoverPoint.isImputed === 1 && <span class="text-amber-500 text-[8px] font-bold">IMP</span>}
+                          </p>
+                          <div class="flex justify-between mt-0.5">
+                            <span class="text-zinc-550">Ist-Last:</span>
+                            <span class="font-bold text-blue-400">{activeHoverPoint.actual !== null ? `${activeHoverPoint.actual.toFixed(1)}%` : "N/A"}</span>
+                          </div>
+                          {showTypicalProfile && activeHoverPoint.typicalMean !== undefined && activeHoverPoint.typicalMean !== null && (
+                            <div class="flex justify-between mt-0.5 border-t border-zinc-900/40 pt-0.5">
+                              <span class="text-teal-400 font-medium">Typisch:</span>
+                              <span class="font-bold text-teal-400">
+                                {activeHoverPoint.typicalMean.toFixed(1)}%
+                                <span class="text-zinc-500 font-normal text-[8px] ml-1">
+                                  ({activeHoverPoint.typicalCiLower.toFixed(0)}-{activeHoverPoint.typicalCiUpper.toFixed(0)}%)
+                                </span>
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* If not showing all models, show the selected model prediction */}
+                          {!showAllModels && (
+                            <>
+                              {modelMode === "quick" && activeHoverPoint.quickPred !== null && (
+                                <div class="flex justify-between mt-0.5">
+                                  <span class="text-zinc-550">{selectedModel === "best" ? "Quick (Best):" : `${selectedModel}:`}</span>
+                                  <span class="font-bold text-emerald-400">{activeHoverPoint.quickPred.toFixed(1)}%</span>
+                                </div>
+                              )}
+                              {modelMode === "detailed" && activeHoverPoint.detailedPred !== null && (
+                                <div class="flex justify-between mt-0.5">
+                                  <span class="text-zinc-550">{selectedModel === "best" ? "Detailed (Best):" : `${selectedModel}:`}</span>
+                                  <span class="font-bold text-amber-400">{activeHoverPoint.detailedPred.toFixed(1)}%</span>
+                                </div>
+                              )}
+                              {showQuantile && predictionData && (() => {
+                                const qModel = modelMode === "quick" 
+                                  ? predictionData.quick_predictions.models.gbquantile90 
+                                  : predictionData.detailed_predictions.models.gbquantile90;
+                                const valObj = modelMode === "quick"
+                                  ? qModel.find(v => v.timestamp.startsWith(activeHoverPoint.timestamp.substring(0, 16)))
+                                  : qModel.find(v => v.horizon_mins === (activeHoverPoint.index - 12) * 5);
+                                return valObj ? (
+                                  <div class="flex justify-between mt-0.5 border-t border-zinc-900/40 pt-0.5">
+                                    <span class="text-rose-400 font-medium">90% Quantil:</span>
+                                    <span class="font-bold text-rose-400">{valObj.value.toFixed(1)}%</span>
+                                  </div>
+                                ) : null;
+                              })()}
+                            </>
+                          )}
+
+                          {/* If showing all models, list all model predictions */}
+                          {showAllModels && predictionData && (() => {
+                            const list = [];
+                            const modelsDict = modelMode === "quick" 
+                              ? predictionData.quick_predictions.models 
+                              : predictionData.detailed_predictions.models;
+                            
+                            const names = ["best", "xgboost", "gradientboosting", "randomforest", "ridge", "lasso", "elasticnet", "gbquantile90"];
+                            const labels = {
+                              best: "Bestes Modell",
+                              xgboost: "XGBoost",
+                              gradientboosting: "Grad Boosting",
+                              randomforest: "Random Forest",
+                              ridge: "Ridge (L2)",
+                              lasso: "Lasso (L1)",
+                              elasticnet: "ElasticNet",
+                              gbquantile90: "Quantil (90%)"
+                            };
+                            const textColors = {
+                              best: "text-emerald-400 font-semibold",
+                              xgboost: "text-violet-400",
+                              gradientboosting: "text-emerald-400 opacity-80",
+                              randomforest: "text-pink-400",
+                              ridge: "text-orange-400",
+                              lasso: "text-blue-400",
+                              elasticnet: "text-teal-400",
+                              gbquantile90: "text-rose-400 font-bold"
+                            };
+
+                            names.forEach(name => {
+                              const vals = modelsDict[name];
+                              if (!vals) return;
+                              const valObj = modelMode === "quick"
+                                ? vals.find(v => v.timestamp.startsWith(activeHoverPoint.timestamp.substring(0, 16)))
+                                : vals.find(v => v.horizon_mins === (activeHoverPoint.index - 12) * 5);
+                              if (valObj) {
+                                list.push(
+                                  <div class="flex justify-between mt-0.5 text-[9px]" key={name}>
+                                    <span class="text-zinc-550">{labels[name]}:</span>
+                                    <span class={`font-mono ${textColors[name]}`}>{valObj.value.toFixed(1)}%</span>
+                                  </div>
+                                );
+                              }
+                            });
+                            return <div class="mt-1 border-t border-zinc-900/60 pt-1 flex flex-col gap-0.5">{list}</div>;
+                          })()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Chart Legend */}
+                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[9px] font-mono select-none border-t border-zinc-900/30 pt-3">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-0.5 bg-blue-500 inline-block rounded-full"></span>
+                        <span class="text-zinc-400">Sensor-IST (Reale Auslastung)</span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <span class={`w-3 h-0.5 ${modelMode === 'quick' ? 'bg-emerald-500' : 'bg-amber-500'} inline-block rounded-full`}></span>
+                        <span class="text-zinc-400">
+                          Prognose ({selectedModel === 'best' ? 'Bestes Modell' : selectedModel.toUpperCase()})
+                        </span>
+                      </div>
+                      {showQuantile && selectedModel !== "gbquantile90" && (
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-3 h-0.5 border-b border-dashed border-rose-500 inline-block"></span>
+                          <span class="text-rose-400 font-medium">90% Quantils-Schranke</span>
+                        </div>
+                      )}
+                      {showTypicalProfile && (
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-3 h-0.5 border-b border-dashed border-teal-500 inline-block"></span>
+                          <span class="text-teal-400 font-medium font-sans">Gewöhnlicher Verlauf (Mittelwert & 95% KI)</span>
+                        </div>
+                      )}
+                      {showAllModels && (
+                        <>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-pink-500 inline-block rounded-full opacity-60"></span>
+                            <span class="text-zinc-500">Random Forest</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-emerald-500 inline-block rounded-full opacity-60"></span>
+                            <span class="text-zinc-500">GBR (MSE)</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-violet-500 inline-block rounded-full opacity-60"></span>
+                            <span class="text-zinc-500">XGBoost</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-orange-500 inline-block rounded-full opacity-60"></span>
+                            <span class="text-zinc-500">Ridge</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-blue-500 inline-block rounded-full opacity-60"></span>
+                            <span class="text-zinc-500">Lasso</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-teal-500 inline-block rounded-full opacity-60"></span>
+                            <span class="text-zinc-500">ElasticNet</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 border-b border-dashed border-rose-500 inline-block opacity-60"></span>
+                            <span class="text-zinc-500">Quantil (90%)</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Weather Bar */}
+                    {predictionData && (
+                      <div class="mt-4 pt-3 border-t border-zinc-900/60 flex flex-wrap items-center text-[10px] font-mono text-zinc-400 gap-x-6 gap-y-2">
+                        <span class="text-zinc-550 uppercase tracking-wider text-[8px] font-bold flex items-center gap-1.5">
+                          Wetterbedingungen:
+                        </span>
+                        <div class={`flex items-center gap-1.5 transition-colors ${predictionData.is_imputed === 1 ? 'text-amber-500 font-semibold' : 'text-zinc-350'}`}>
+                          <Thermometer className={`size-3.5 h-3.5 w-3.5 ${predictionData.is_imputed === 1 ? 'text-amber-500' : 'text-zinc-500'}`} />
+                          <span>{predictionData.current_weather.temp.toFixed(1)}°C</span>
+                        </div>
+                        <div class={`flex items-center gap-1.5 transition-colors ${predictionData.is_imputed === 1 ? 'text-amber-500 font-semibold' : 'text-zinc-350'}`}>
+                          <Droplets className={`size-3.5 h-3.5 w-3.5 ${predictionData.is_imputed === 1 ? 'text-amber-500' : 'text-zinc-500'}`} />
+                          <span>{predictionData.current_weather.humidity.toFixed(0)}% Feuchte</span>
+                        </div>
+                        <div class={`flex items-center gap-1.5 transition-colors ${predictionData.is_imputed === 1 ? 'text-amber-500 font-semibold' : 'text-zinc-350'}`}>
+                          <CloudRain className={`size-3.5 h-3.5 w-3.5 ${predictionData.is_imputed === 1 ? 'text-amber-500' : 'text-zinc-500'}`} />
+                          <span>{predictionData.current_weather.rain.toFixed(1)}mm Regen</span>
+                        </div>
+                        <div class={`flex items-center gap-1 transition-colors ${predictionData.is_imputed === 1 ? 'text-amber-500 font-semibold' : 'text-zinc-350'}`}>
+                          <span class={`w-1.5 h-1.5 rounded-full inline-block mr-1 ${predictionData.is_imputed === 1 ? 'bg-amber-500' : 'bg-zinc-500'}`}></span>
+                          <span>
+                            {predictionData.current_weather.is_day === 1 ? "Taglicht" : "Dunkelheit"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                  </CardContent>
+                </Card>
+
+              </div>
+
+            </div>
+
+          </main>
+
+          <footer class="border-t border-zinc-900 py-4 text-center text-[10px] font-mono text-zinc-650 mt-auto">
+            <span>FIXX Fitness Prediction Engine • HS KI-Projekt Prof. Dr. Nakou</span>
+          </footer>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

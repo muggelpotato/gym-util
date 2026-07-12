@@ -1,0 +1,261 @@
+{
+    "Quick": {
+        "best_model": "RandomForest",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 5,
+                "n_estimators": 100
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.01,
+                "max_depth": 5,
+                "n_estimators": 200,
+                "subsample": 1.0
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.1,
+                "max_depth": 4,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.05,
+                "max_depth": 5,
+                "n_estimators": 100,
+                "subsample": 0.8
+            },
+            "Ridge": {
+                "alpha": 100.0
+            },
+            "Lasso": {
+                "alpha": 1.0
+            },
+            "ElasticNet": {
+                "alpha": 0.1,
+                "l1_ratio": 0.8
+            }
+        }
+    },
+    "Detailed_5m": {
+        "best_model": "GradientBoosting",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 5,
+                "n_estimators": 200
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.1,
+                "max_depth": 3,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.05,
+                "max_depth": 3,
+                "n_estimators": 100,
+                "subsample": 1.0
+            },
+            "Ridge": {
+                "alpha": 0.1
+            },
+            "Lasso": {
+                "alpha": 0.01
+            },
+            "ElasticNet": {
+                "alpha": 0.001,
+                "l1_ratio": 0.8
+            }
+        }
+    },
+    "Detailed_15m": {
+        "best_model": "XGBoost",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 5,
+                "n_estimators": 500
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.05,
+                "max_depth": 3,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "Ridge": {
+                "alpha": 1.0
+            },
+            "Lasso": {
+                "alpha": 0.1
+            },
+            "ElasticNet": {
+                "alpha": 0.01,
+                "l1_ratio": 0.8
+            }
+        }
+    },
+    "Detailed_30m": {
+        "best_model": "XGBoost",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 2,
+                "n_estimators": 500
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 1.0
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.1,
+                "max_depth": 4,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "Ridge": {
+                "alpha": 100.0
+            },
+            "Lasso": {
+                "alpha": 0.1
+            },
+            "ElasticNet": {
+                "alpha": 0.1,
+                "l1_ratio": 0.8
+            }
+        }
+    },
+    "Detailed_60m": {
+        "best_model": "XGBoost",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 2,
+                "n_estimators": 500
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.05,
+                "max_depth": 3,
+                "n_estimators": 100,
+                "subsample": 1.0
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.1,
+                "max_depth": 4,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "Ridge": {
+                "alpha": 1000.0
+            },
+            "Lasso": {
+                "alpha": 0.1
+            },
+            "ElasticNet": {
+                "alpha": 0.1,
+                "l1_ratio": 0.8
+            }
+        }
+    },
+    "Detailed_90m": {
+        "best_model": "XGBoost",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 5,
+                "n_estimators": 100
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.1,
+                "max_depth": 4,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 1.0
+            },
+            "Ridge": {
+                "alpha": 1000.0
+            },
+            "Lasso": {
+                "alpha": 1.0
+            },
+            "ElasticNet": {
+                "alpha": 1.0,
+                "l1_ratio": 0.8
+            }
+        }
+    },
+    "Detailed_120m": {
+        "best_model": "GradientBoosting",
+        "models": {
+            "RandomForest": {
+                "max_depth": 10,
+                "min_samples_split": 2,
+                "n_estimators": 500
+            },
+            "GradientBoosting": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "GBQuantile90": {
+                "learning_rate": 0.05,
+                "max_depth": 4,
+                "n_estimators": 200
+            },
+            "XGBoost": {
+                "learning_rate": 0.01,
+                "max_depth": 3,
+                "n_estimators": 500,
+                "subsample": 0.8
+            },
+            "Ridge": {
+                "alpha": 1000.0
+            },
+            "Lasso": {
+                "alpha": 1.0
+            },
+            "ElasticNet": {
+                "alpha": 1.0,
+                "l1_ratio": 0.8
+            }
+        }
+    }
+}

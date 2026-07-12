@@ -1,0 +1,1 @@
+.venv\Scripts\python -B Inferenz/predict.py --server --port 5000

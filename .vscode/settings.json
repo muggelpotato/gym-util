@@ -1,0 +1,10 @@
+{
+  // Deaktiviert die automatische Terminal-Aktivierung, um Verzögerungen beim Öffnen neuer Terminals zu vermeiden
+  "python.terminal.activateEnvironment": false,
+
+  // Setzt den Standard-Python-Interpreter fest auf das lokale .venv
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+
+  // Sendet Code-Auswahl bei Shift+Enter direkt in das Interactive Window (statt in das normale Terminal)
+  "jupyter.interactiveWindow.textEditor.executeSelection": true
+}

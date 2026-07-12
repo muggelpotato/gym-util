@@ -1,0 +1,11 @@
+.venv/
+data/
+*.pkl
+__pycache__/
+*.pyc
+*.png
+*.xlsx
+logger.py
+vorlesung/
+GEMINI.md
+Projekt Protokoll.md
