@@ -1,8 +1,9 @@
-pandas
-numpy
-holidays
-scikit-learn
-xgboost
-statsmodels
-matplotlib
-seaborn
+# Python version: 3.13.14
+pandas==3.0.3
+numpy==2.4.5
+holidays==0.96
+scikit-learn==1.8.0
+xgboost==3.2.0
+statsmodels==0.14.6
+matplotlib==3.10.9
+seaborn==0.13.2

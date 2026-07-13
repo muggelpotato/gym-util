@@ -3,21 +3,31 @@ import sys
 import subprocess
 import platform
 
-requirements = [
-    "pandas",
-    "numpy",
-    "holidays",
-    "scikit-learn",
-    "xgboost",
-    "statsmodels",
-    "matplotlib",
-    "seaborn"
-]
+def check_python_version():
+    major, minor, micro = sys.version_info[:3]
+    print(f"[INFO] Detected Python {major}.{minor}.{micro}")
+    if major < 3 or minor < 10:
+        print("[WARNING] This project was built on Python 3.13. You are using an older version.")
+        print("[WARNING] We recommend Python 3.10+ for full compatibility.")
+    elif major == 3 and minor != 13:
+        print(f"[INFO] Note: Project was built with Python 3.13.x, but you have 3.{minor}.x.")
+
+def create_directories():
+    dirs = [
+        "data",
+        "Model/models/final",
+        "Model/models/debug",
+        "Model/reports/final",
+        "Model/reports/debug"
+    ]
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
+        print(f"[OK] Ensured directory exists: {d}")
 
 def main():
-    with open("requirements.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(requirements) + "\n")
-    print("[OK] requirements.txt written.")
+    print("[INFO] Using existing requirements.txt.")
+    check_python_version()
+    create_directories()
 
     venv_dir = ".venv"
     if not os.path.exists(venv_dir):
